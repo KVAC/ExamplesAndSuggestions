@@ -29,5 +29,82 @@
             <type>jar</type>
         </dependency>
     </dependencies>
+    <build>
+        <!--${project.artifactId}-${project.version}+git-${git.commit.id.full}-->
+        <plugins>
+            <!--JAR-->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>build-a</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.github.kvac.examplesandsuggestions.maven.resolve.jar.Init</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <!-- <appendAssemblyId>false</appendAssemblyId> -->
+                            <finalName>Maven.Resolve.Jar-${project.artifactId}-${project.version}+git-${git.commit.id.full}</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>build-b</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>another main class name with full package</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <!-- <appendAssemblyId>false</appendAssemblyId> -->
+                            <finalName>not</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+            </plugin>
+            <!--JAR-->
+            <!--GIT-->
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>4.0.0</version>
+                <executions>
+                    <execution>
+                        <id>get-the-git-infos</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    <includeOnlyProperties>
+                        <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.local.branch.ahead$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
+                    </includeOnlyProperties>
+                    <commitIdGenerationMode>full</commitIdGenerationMode>
+                </configuration>
+            </plugin>
+            <!--GIT-->
+        </plugins>
+    </build>
 
 </project>

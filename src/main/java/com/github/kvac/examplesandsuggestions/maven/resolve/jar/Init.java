@@ -14,12 +14,19 @@ import org.apache.commons.lang3.StringUtils;
 public class Init {
 
     public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.err.println("first arg - mode (1 show cmd for dependency download, 2 show path for dependency)\nsecond arg - path to jar file");
+            System.exit(1);
+        }
+
         File mavenrepo = new File(
                 new File(
                         System.getProperty("user.home"), ".m2"
                 ), "repository"
         );
-        File jarFile = new File("/home/jdcs_dev/minecraft/LIBS/github.com.AuthMe.AuthMeReloaded/target/AuthMe-5.6.0-SNAPSHOT.jar");
+        int mode = Integer.parseInt(args[0]);
+
+        File jarFile = new File(args[1]);
 
         try (ZipFile zipFile = new ZipFile(jarFile)) {
             Enumeration zipEntries = zipFile.entries();
@@ -62,10 +69,13 @@ public class Init {
                                         artefactId),
                                 version), artefactId + "-" + version + ".jar");
 
-                        //  String downloadCMD = "mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:get -DartifactId=" + artefactId + " -DgroupId=" + groupId + " -Dversion=" + version;
-                        //  System.err.println(downloadCMD);
-                        // ADD TO RESOLVE DEPENDENCY
-                        // System.err.println(fullPath);
+                        if (mode == 1) {
+                            String downloadCMD = "mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:get -DartifactId=" + artefactId + " -DgroupId=" + groupId + " -Dversion=" + version;
+                            System.out.println(downloadCMD);
+                        } else if (mode == 2) {
+                            // ADD TO RESOLVE DEPENDENCY
+                            System.out.println(fullPath);
+                        }
                     }
                 }
             }
