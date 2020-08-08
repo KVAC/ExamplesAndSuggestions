@@ -7,3 +7,6 @@ FIRST	---	mode:<p>
 			2 show path for dependency,<p>
 			3 check file exist<p>
 SECOND	---	path to jar file
+
+
+#!!!Defects: cannot find out the version from the parent project
