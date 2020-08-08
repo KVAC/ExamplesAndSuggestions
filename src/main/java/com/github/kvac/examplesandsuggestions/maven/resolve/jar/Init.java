@@ -1,106 +1,67 @@
 package com.github.kvac.examplesandsuggestions.maven.resolve.jar;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.FileNotFoundException;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import java.io.IOException;
+import java.util.ArrayList;
+import org.apache.maven.model.Dependency;
 
 public class Init {
 
+    static File mavenrepo = new File(
+            new File(
+                    System.getProperty("user.home"), ".m2"
+            ), "repository"
+    );
+
     public static void main(String[] args) throws IOException {
         if (args.length < 2) {
-            System.err.println("first arg - mode (1 show cmd for dependency download, 2 show path for dependency)\nsecond arg - path to jar file");
+            System.err.println("first arg - mode (1 show cmd for dependency download, 2 show path for dependency,3 check file exist)\nsecond arg - path to jar file");
             System.exit(1);
         }
-
-        File mavenrepo = new File(
-                new File(
-                        System.getProperty("user.home"), ".m2"
-                ), "repository"
-        );
         int mode = Integer.parseInt(args[0]);
-
         File jarFile = new File(args[1]);
+
+        if (!jarFile.exists()) {
+            throw new FileNotFoundException(jarFile.getAbsolutePath());
+        }
+
+        ArrayList<Dependency> deps = new ArrayList();
 
         try (ZipFile zipFile = new ZipFile(jarFile)) {
             Enumeration zipEntries = zipFile.entries();
             while (zipEntries.hasMoreElements()) {
                 String fileName = ((ZipEntry) zipEntries.nextElement()).getName();
-                if (fileName.endsWith("pom.properties")) {
-                    //get data
-                    String contents = readZipFile(jarFile.getAbsolutePath(), fileName);
 
-                    //get strings
-                    String[] stArr = contents.split("\n");
-                    ArrayList<String> linesList = new ArrayList<>();
-                    linesList.addAll(Arrays.asList(stArr));
-
-                    String groupId = null;
-                    String artefactId = null;
-                    String version = null;
-                    //SET PARAMS
-                    for (String line : linesList) {
-                        if (line.startsWith("groupId")) {
-                            groupId = StringUtils.substringAfter(line, "=");
-                            groupId = groupId.replaceAll("\n", "").trim();
+                if (fileName.endsWith("pom.properties") || fileName.endsWith("pom.xml")) {
+                    try {
+                        if (fileName.endsWith("pom.properties")) {
+                            Resolvers.pomPropertiesResolve(deps, jarFile, fileName);
                         }
-                        if (line.startsWith("artifactId")) {
-                            artefactId = StringUtils.substringAfter(line, "=");
-                            artefactId = artefactId.replaceAll("\n", "").trim();
+                        if (fileName.endsWith("pom.xml")) {
+                            Resolvers.pomXmlResolve(deps, jarFile, fileName);
                         }
-                        if (line.startsWith("version")) {
-                            version = StringUtils.substringAfter(line, "=");
-                            version = version.replaceAll("\n", "").trim();
-                        }
-                    }
-
-                    if (groupId != null && artefactId != null && version != null) {
-                        String newGroupId = groupId.replaceAll("\\.", File.separator);
-                        File fullPath = new File(new File(
-                                new File(
-                                        new File(
-                                                mavenrepo, newGroupId),
-                                        artefactId),
-                                version), artefactId + "-" + version + ".jar");
-
-                        if (mode == 1) {
-                            String downloadCMD = "mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:get -DartifactId=" + artefactId + " -DgroupId=" + groupId + " -Dversion=" + version;
-                            System.out.println(downloadCMD);
-                        } else if (mode == 2) {
-                            // ADD TO RESOLVE DEPENDENCY
-                            System.out.println(fullPath);
-                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }
         }
-    }
-
-    public static String readZipFile(String zipFilePath, String relativeFilePath) {
-        try {
-            ZipFile zipFile = new ZipFile(zipFilePath);
-            Enumeration<? extends ZipEntry> e = zipFile.entries();
-            while (e.hasMoreElements()) {
-                ZipEntry entry = (ZipEntry) e.nextElement();
-                // if the entry is not directory and matches relative file then extract it
-                if (!entry.isDirectory() && entry.getName().equals(relativeFilePath)) {
-                    BufferedInputStream bis = new BufferedInputStream(
-                            zipFile.getInputStream(entry));
-                    String fileContentsStr = IOUtils.toString(bis, "UTF-8");
-
-                    bis.close();
-                    return fileContentsStr;
-                }
+        //TODO SHOW
+        for (Dependency dep : deps) {
+            File fullPath = Utils.generatePath(mavenrepo, dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
+            if (mode == 1) {
+                String downloadCMD = "mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:get -DartifactId=" + dep.getArtifactId() + " -DgroupId=" + dep.getGroupId() + " -Dversion=" + dep.getVersion();
+                System.out.println(downloadCMD);
+            } else if (mode == 2) {
+                // ADD TO RESOLVE DEPENDENCY
+                System.out.println(fullPath);
+            } else if (mode == 3) {
+                System.out.println(fullPath.exists() + ":" + fullPath);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return null;
     }
 }
