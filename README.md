@@ -1,9 +1,9 @@
 # ExamplesAndSuggestions
 USAGE:
-java -jar PROG.jar FIRST SECOND
+java -jar PROG.jar FIRST SECOND<p>
 where:
-FIRST	---	mode:
-			1 show cmd for dependency download, 
-			2 show path for dependency,
-			3 check file exist
+FIRST	---	mode:<p>
+    			1 show cmd for dependency download,<p>
+			2 show path for dependency,<p>
+			3 check file exist<p>
 SECOND	---	path to jar file
